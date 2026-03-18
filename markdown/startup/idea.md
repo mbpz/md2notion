@@ -1,0 +1,3 @@
+# Idea
+
+Startup idea.

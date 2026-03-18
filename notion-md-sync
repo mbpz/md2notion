@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""入口脚本：可直接运行 ./notion-md-sync ./markdown 或 python notion-md-sync ./markdown"""
+import sys
+import os
+# 项目根目录加入 path，便于从任意位置执行
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from notion_md_sync.cli import main
+main()

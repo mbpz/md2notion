@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notion-md-sync"
+version = "0.1.0"
+description = "本地多层目录 Markdown 同步到 Notion，保持层级，支持增量与并发"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "notion-client>=2.2.1",
+    "tqdm>=4.66.0",
+    "requests>=2.31.0",
+]
+
+[project.scripts]
+notion-md-sync = "notion_md_sync.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["notion_md_sync*"]
