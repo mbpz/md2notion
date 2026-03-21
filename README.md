@@ -35,9 +35,59 @@ Knowledge (根页面)
 - Python 3.9+
 - Notion Integration（见下方配置）
 
-## 一键安装（推荐）
+## 打包产物 + 一键安装（推荐）
 
-在 macOS / Linux 终端执行（需已安装 **Python 3.9+**；脚本会自动尝试安装 **pipx**）：
+先在项目根目录构建发布产物：
+
+```bash
+bash scripts/build_release.sh
+```
+
+这会生成：
+
+- `dist/*.whl`
+- `dist/*.tar.gz`
+
+如果你已经拿到 wheel 文件，本机安装可直接执行：
+
+```bash
+bash scripts/install.sh dist/notion_md_sync-0.1.0-py3-none-any.whl
+```
+
+如果你把 `install.sh` 和 wheel 发布到了远程地址，终端里可直接一条命令安装（需已安装 **Python 3.9+**；脚本会自动尝试安装 **pipx**）：
+
+```bash
+curl -fsSL <install.sh-url> | bash -s -- <wheel-url>
+```
+
+## GitHub Actions 自动构建
+
+仓库已支持 GitHub Actions 自动构建：
+
+- `pull_request` / 推送到 `main` 或 `master`：自动构建并上传 `dist/*` 为 workflow artifact
+- 推送 tag（如 `v0.1.0`）：自动构建，并把 wheel / tar.gz 挂到 GitHub Release
+- 也支持手动触发 `Build Release` workflow
+
+工作流文件：
+
+```bash
+.github/workflows/build-release.yml
+```
+
+常见发布方式：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+发布完成后，可把 release 上的 wheel 地址配合安装脚本提供给用户：
+
+```bash
+curl -fsSL <install.sh-url> | bash -s -- <wheel-url>
+```
+
+仍然支持直接从仓库安装：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/install.sh | bash
@@ -46,6 +96,12 @@ curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/insta
 安装完成后可直接使用全局命令 `notion-md-sync`（若提示找不到命令，请重新打开终端，或执行 `export PATH="$HOME/.local/bin:$PATH"`）。
 
 **卸载：**
+
+```bash
+notion-md-sync uninstall
+```
+
+兼容旧卸载脚本：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/uninstall.sh | bash
@@ -112,6 +168,9 @@ python import_md_to_notion.py
 ```bash
 # 一条命令同步（使用环境变量 NOTION_TOKEN、ROOT_PAGE_ID）
 notion-md-sync ./markdown
+
+# 内置卸载
+notion-md-sync uninstall
 
 # 或指定参数
 notion-md-sync ./knowledge --token "$NOTION_TOKEN" --page-id "$ROOT_PAGE_ID"

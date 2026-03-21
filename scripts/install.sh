@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# 一键安装 notion-md-sync：优先 pipx 独立环境，失败则 pip --user。
+# 一键安装 notion-md-sync：优先安装打包产物（wheel / sdist），其次安装当前目录，最后回退到 git。
 set -euo pipefail
 
 REPO_URL="${NOTION_MD_SYNC_REPO:-https://github.com/mbpz/md2notion.git}"
 REF="${NOTION_MD_SYNC_REF:-master}"
 GIT_SPEC="git+${REPO_URL}@${REF}"
+PACKAGE_SPEC="${1:-${NOTION_MD_SYNC_PACKAGE_SPEC:-}}"
 
 export PATH="${HOME}/.local/bin:${PATH}"
 
@@ -58,11 +59,17 @@ main() {
     install_spec=$local_root
     echo "检测到本地仓库，从目录安装: $install_spec"
   fi
+  if [[ -n "$PACKAGE_SPEC" ]]; then
+    install_spec=$PACKAGE_SPEC
+    echo "使用打包产物安装: $install_spec"
+  fi
 
   if install_with_pipx "$install_spec"; then
     echo ""
     echo "安装完成。请先配置 NOTION_TOKEN、ROOT_PAGE_ID，然后运行:"
     echo "  notion-md-sync ./markdown"
+    echo "卸载命令:"
+    echo "  notion-md-sync uninstall"
     echo ""
     echo "若提示找不到命令，请重新打开终端，或执行: export PATH=\"\$HOME/.local/bin:\$PATH\""
     exit 0
@@ -72,6 +79,8 @@ main() {
   echo ""
   echo "安装完成。请先配置 NOTION_TOKEN、ROOT_PAGE_ID，然后运行:"
   echo "  notion-md-sync ./markdown"
+  echo "卸载命令:"
+  echo "  notion-md-sync uninstall"
 }
 
 main "$@"
