@@ -24,14 +24,14 @@ def _norm_id(pid: str) -> str:
 
 
 def _to_uuid(pid: str) -> str:
-    """转为 Notion API 要求的 UUID 格式（8-4-4-4-12）。若已是 32 位 hex 则加连字符。"""
-    raw = (pid or "").replace("-", "").strip()
-    # 只保留 hex 字符，取最后 32 位（兼容误粘贴了前缀的情况）
+    """转为 Notion JSON 里 parent.page_id 等字段要求的 UUID（8-4-4-4-12）。无连字符的 32 位 hex 会补全格式。"""
+    raw = (pid or "").strip()
+    # 只保留 hex 字符，取最后 32 位（兼容 URL 里多带了前缀的情况）
     hex_part = "".join(c for c in raw if c in "0123456789abcdefABCDef").lower()
     if len(hex_part) >= 32:
         hex_part = hex_part[-32:]
-    elif len(hex_part) < 32:
-        return raw  # 无法转换，原样返回
+    if len(hex_part) != 32:
+        return raw  # 无法用 32 位 hex 构造 UUID，原样传出
     return f"{hex_part[0:8]}-{hex_part[8:12]}-{hex_part[12:16]}-{hex_part[16:20]}-{hex_part[20:32]}"
 
 
@@ -50,9 +50,9 @@ def create_page_with_markdown(
     markdown: str,
 ) -> str | None:
     """创建子页面并写入 Markdown。优先用 Markdown API（若可用），否则用 block API。"""
-    parent_id = _norm_id(parent_id)
+    parent_uuid = _to_uuid(parent_id)
     payload: dict[str, Any] = {
-        "parent": {"page_id": parent_id},
+        "parent": {"page_id": parent_uuid},
         "properties": {
             "title": {
                 "title": [{"text": {"content": (title or "Untitled")[:2000]}}]
@@ -93,12 +93,12 @@ def create_page_with_markdown(
 
 def create_folder_page(token: str, parent_id: str, title: str) -> str | None:
     """只创建带标题的子页面（文件夹）。"""
-    parent_id = _norm_id(parent_id)
+    parent_uuid = _to_uuid(parent_id)
     r = requests.post(
         f"{NOTION_API_BASE}/pages",
         headers=_headers(token),
         json={
-            "parent": {"page_id": parent_id},
+            "parent": {"page_id": parent_uuid},
             "properties": {
                 "title": {
                     "title": [{"text": {"content": (title or "Untitled")[:2000]}}]
