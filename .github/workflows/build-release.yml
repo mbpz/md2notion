@@ -20,6 +20,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 打 tag 发布时，wheel/sdist 文件名取自 pyproject 的 version；若未手动改版本会仍是旧号。
+      # 此处用 tag（如 v0.2.0 → 0.2.0）写回 pyproject，再构建，产物名与 Release 一致。
+      - name: Align pyproject version with release tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          export PACKAGE_VERSION="${TAG_NAME#v}"
+          python3 <<'PY'
+          import os
+          import re
+          import pathlib
+
+          v = os.environ["PACKAGE_VERSION"].strip()
+          if not v:
+              raise SystemExit("empty PACKAGE_VERSION")
+          p = pathlib.Path("pyproject.toml")
+          text = p.read_text(encoding="utf-8")
+          new_text, n = re.subn(
+              r'(?m)^version\s*=\s*"[^"]*"',
+              f'version = "{v}"',
+              text,
+              count=1,
+          )
+          if n != 1:
+              raise SystemExit(f"expected to patch one version line in pyproject.toml, got {n}")
+          p.write_text(new_text, encoding="utf-8")
+          print(f"Set [project] version = {v!r} from tag {os.environ['TAG_NAME']!r}")
+          PY
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -31,10 +61,17 @@ jobs:
       - name: Build distributables
         run: bash scripts/build_release.sh
 
+      # ref_name 在 PR 上可能是 "42/merge"，含斜杠会导致 artifact 名非法，统一替换为 -
+      - name: Workflow artifact name
+        id: wf_artifact
+        run: |
+          n="${{ github.ref_name }}"
+          echo "name=notion-md-sync-${n//\//-}" >> "$GITHUB_OUTPUT"
+
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: notion-md-sync-dist
+          name: ${{ steps.wf_artifact.outputs.name }}
           path: dist/*
           if-no-files-found: error
 
