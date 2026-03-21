@@ -35,11 +35,44 @@ Knowledge (根页面)
 - Python 3.9+
 - Notion Integration（见下方配置）
 
-## 安装依赖
+## 一键安装（推荐）
+
+在 macOS / Linux 终端执行（需已安装 **Python 3.9+**；脚本会自动尝试安装 **pipx**）：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/install.sh | bash
+```
+
+安装完成后可直接使用全局命令 `notion-md-sync`（若提示找不到命令，请重新打开终端，或执行 `export PATH="$HOME/.local/bin:$PATH"`）。
+
+**卸载：**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/uninstall.sh | bash
+```
+
+**自定义仓库或分支**（例如 fork 或固定某次发布）：
+
+```bash
+export NOTION_MD_SYNC_REPO="https://github.com/你的用户/md2notion.git"
+export NOTION_MD_SYNC_REF="master"
+curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/install.sh | bash
+```
+
+**已克隆本仓库时本地安装**（与远程安装二选一即可）：
+
+```bash
+cd md2notion
+bash scripts/install.sh
+```
+
+---
+
+## 安装依赖（手动 / 开发）
 
 ```bash
 pip install -r requirements.txt
-# 或安装为可执行包（推荐，获得 notion-md-sync 命令）
+# 或安装为可执行包（获得 notion-md-sync 命令）
 pip install -e .
 ```
 
