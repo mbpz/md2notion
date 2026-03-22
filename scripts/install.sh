@@ -7,6 +7,14 @@ REF="${NOTION_MD_SYNC_REF:-master}"
 GIT_SPEC="git+${REPO_URL}@${REF}"
 PACKAGE_SPEC="${1:-${NOTION_MD_SYNC_PACKAGE_SPEC:-}}"
 
+# 仅写版本号（如 0.1.2）时，拼 GitHub Release 上的 wheel 地址；fork 请设 NOTION_MD_SYNC_GITHUB=owner/repo
+GITHUB_SLUG="${NOTION_MD_SYNC_GITHUB:-}"
+if [[ -z "$GITHUB_SLUG" && "$REPO_URL" =~ github\.com/([^/]+)/([^/]+)$ ]]; then
+  _tail="${BASH_REMATCH[2]}"
+  GITHUB_SLUG="${BASH_REMATCH[1]}/${_tail%.git}"
+fi
+[[ -n "$GITHUB_SLUG" ]] || GITHUB_SLUG="mbpz/md2notion"
+
 export PATH="${HOME}/.local/bin:${PATH}"
 
 die() {
@@ -52,6 +60,23 @@ install_with_pip_user() {
   python3 -m pip install --user -U "$spec"
 }
 
+# 将用户传入的「版本号 / 完整 wheel URL / 本地路径」解析为 pip/pipx 可装的 spec
+expand_user_package_spec() {
+  local raw=$1
+  [[ -z "$raw" ]] && return 0
+  case "$raw" in
+    http://*|https://*|git+*) printf '%s' "$raw"; return ;;
+  esac
+  [[ "$raw" == *.whl ]] && { printf '%s' "$raw"; return; }
+  local ver="${raw#v}"
+  # 标准发版：0.1.2 或 0.1.2-rc.1 等（与 tag v0.1.2 / asset 名 notion_md_sync-0.1.2-... 一致）
+  if [[ "$ver" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+._a-zA-Z0-9]+)?$ ]]; then
+    printf '%s' "https://github.com/${GITHUB_SLUG}/releases/download/v${ver}/notion_md_sync-${ver}-py3-none-any.whl"
+    return
+  fi
+  printf '%s' "$raw"
+}
+
 main() {
   need_python
   local install_spec=$GIT_SPEC
@@ -60,7 +85,7 @@ main() {
     echo "检测到本地仓库，从目录安装: $install_spec"
   fi
   if [[ -n "$PACKAGE_SPEC" ]]; then
-    install_spec=$PACKAGE_SPEC
+    install_spec=$(expand_user_package_spec "$PACKAGE_SPEC")
     echo "使用打包产物安装: $install_spec"
   fi
 

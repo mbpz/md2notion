@@ -54,10 +54,20 @@ bash scripts/build_release.sh
 bash scripts/install.sh dist/notion_md_sync-0.1.0-py3-none-any.whl
 ```
 
-如果你把 `install.sh` 和 wheel 发布到了远程地址，终端里可直接一条命令安装（需已安装 **Python 3.9+**；脚本会自动尝试安装 **pipx**）：
+如果你把 `install.sh` 和 wheel 发布到了 GitHub Release，终端里可直接一条命令安装（需已安装 **Python 3.9+**；脚本会自动尝试安装 **pipx**）。
+
+**推荐（只写版本号，脚本会自动拼 Release 上的 wheel 地址）：**
 
 ```bash
-curl -fsSL <install.sh-url> | bash -s -- <wheel-url>
+curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/install.sh | bash -s -- 0.1.2
+```
+
+也支持 `v0.1.2`。fork 仓库时请设置 `NOTION_MD_SYNC_GITHUB=你的用户/仓库名`。
+
+仍可直接传完整 wheel URL 或本地路径：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/install.sh | bash -s -- 'https://github.com/.../notion_md_sync-0.1.2-py3-none-any.whl'
 ```
 
 ## GitHub Actions 自动构建
@@ -81,10 +91,10 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-发布完成后，可把 release 上的 wheel 地址配合安装脚本提供给用户：
+发布完成后，给用户一条短命令即可（把 `0.1.2` 换成本次 tag 对应的版本号）：
 
 ```bash
-curl -fsSL <install.sh-url> | bash -s -- <wheel-url>
+curl -fsSL https://raw.githubusercontent.com/mbpz/md2notion/master/scripts/install.sh | bash -s -- 0.1.2
 ```
 
 仍然支持直接从仓库安装：
